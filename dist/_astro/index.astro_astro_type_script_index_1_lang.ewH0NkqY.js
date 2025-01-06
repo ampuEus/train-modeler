@@ -1,0 +1,1 @@
+import{i as n}from"./form.DYraev90.js";const i=document.getElementById("importDataBtn"),t=document.getElementById("importData");i.addEventListener("click",function(){t.click()});t.addEventListener("change",function(){const e=t.files[0];if(!e)return alert("No file selected"),!1;n(e)});
