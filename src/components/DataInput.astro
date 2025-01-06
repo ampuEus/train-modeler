@@ -1,0 +1,25 @@
+---
+type Props = {
+  name: string,
+  label: string,
+  placeholder?: string,
+  default_value?: number,
+  tooltip?: string
+};
+
+const { name, label, placeholder=null, default_value="", tooltip="" } = Astro.props;
+
+---
+<label title={tooltip}>
+  {label}
+  <input
+  type="number"
+  step="0.0001"
+  min="0"
+  value={default_value}
+  name={name}
+  placeholder={placeholder}
+  title={tooltip}
+  required />
+</label>
+<br>

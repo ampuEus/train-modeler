@@ -1,0 +1,46 @@
+---
+type Props = {
+  name: string,
+  label_checkbox: string,
+  label: string,
+  placeholder?: string,
+  default_value?: number,
+  tooltip?: string
+};
+
+const { name, label_checkbox, label, placeholder=null, default_value="", tooltip="" } = Astro.props;
+const id_checkbox = Math.random().toString(36).substring(2, 9);
+const id_data = Math.random().toString(36).substring(2, 9);
+---
+<label title={tooltip}> {label_checkbox} </label>
+<input type="checkbox" id={id_checkbox} />
+<div>
+  <label >{label}</label>
+  <input
+  id={id_data}
+  name={name}
+  type="number"
+  step="0.0001"
+  min="0"
+  value={default_value}
+  placeholder={placeholder}
+  title={tooltip}
+  disabled
+  />
+</div>
+<br>
+
+<script type="module" define:vars={{id_data, id_checkbox}}>
+  var checkbox = document.getElementById(id_checkbox);
+
+  checkbox.addEventListener('click', function () {
+      var data = document.getElementById(id_data);
+      if (this.checked) {
+        data.disabled = false;
+        data.required = true;
+      } else {
+        data.disabled = true;
+        data.required = false;
+      }
+  })
+</script>

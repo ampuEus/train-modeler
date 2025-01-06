@@ -1,0 +1,20 @@
+Datos del tren
+ - meter a mano
+ - via json/ymal  -> possibilidad de guardar los datos metidos
+Datos del recorrido
+ - recta
+ - curva
+ - trayecto csv
+ - trayecto via mapa (opcion de importar de opentrackmap.com)
+Formulas de modelado
+ - ¿Poner diferentes formulas?
+Generar graficas
+ - Detectar cruce
+ - zoom / paneo
+Conclusión de los resultados
+Generar informe
+
+----
+
+Añadir explicación (como en lo de calculadora de interes)
+Referencias de las formulas
