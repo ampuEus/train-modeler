@@ -44,7 +44,7 @@ const updateData2 = "data2"
 </Layout>
 
 <script>
-  import { exportData } from "@/utils/form";
+  import { exportData } from "@utils/form";
 
   const exportBtn = document.getElementById('exportDataBtn') as HTMLButtonElement | null;
   if (!exportBtn) throw new Error('Export button not found in the DOM.');
@@ -60,7 +60,7 @@ const updateData2 = "data2"
 </script>
 
 <script>
-  import { importData } from "@/utils/form";
+  import { importData } from "@utils/form";
 
   const inputBtn = document.getElementById('importDataBtn') as HTMLButtonElement | null;
   const inputFile = document.getElementById('importData') as HTMLInputElement | null;
@@ -83,12 +83,12 @@ const updateData2 = "data2"
 
 <script type="module" define:vars={{updateData1, updateData2}}>
 
-import { getFormDataAsObject } from "/src/utils/form";
-import { getPowerSpeedCurve } from "/src/utils/train_model";
-import { getTorqueSpeedCurve } from "/src/utils/train_model";
-import { getResistance } from "/src/utils/train_model";
-import { getVmax } from "/src/utils/train_model";
-import { renameKeys } from "/src/utils/utils";
+import { getFormDataAsObject } from "./src/utils/form.ts";
+import { getPowerSpeedCurve } from "./src/utils/train_model.ts";
+import { getTorqueSpeedCurve } from "./src/utils/train_model.ts";
+import { getResistance } from "./src/utils/train_model.ts";
+import { getVmax } from "./src/utils/train_model.ts";
+import { renameKeys } from "./src/utils/utils.ts";
 
 const form = document.getElementById("trainData");
 if (!form instanceof HTMLFormElement){
