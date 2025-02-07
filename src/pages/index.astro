@@ -4,12 +4,15 @@ import DataInput from "@/components/DataInput.astro";
 import CheckboxDataInput from "@/components/CheckboxDataInput.astro";
 import Chart from "@/components/Chart.astro";
 
-const updateData1 = "data1"
-const updateData2 = "data2"
+const updatePowerChart = "power-force"
+const updateResistanceChart = "resistance"
 ---
 
-<Layout>
-  <form id="trainData">
+<Layout >
+  <form
+  id="trainData"
+  data-update_power_chart={updatePowerChart}
+  data-update_resistance_chart={updateResistanceChart}>
     <DataInput name="gravity" label="Gravity [m/s^2]: " default_value={9.806}/>
     <DataInput name="rho" label="ρ [kg/m^3]: " default_value={1.225} tooltip="Air density under standard conditions"/>
 
@@ -38,8 +41,8 @@ const updateData2 = "data2"
   </form>
   <pre id="output"></pre>
   <div>
-    <Chart title="Power-Force Curves" event_update={updateData1}/>
-    <Chart title="Resistance Curves" event_update={updateData2}/>
+    <Chart title="Power-Force Curves" event_update={updatePowerChart}/>
+    <Chart title="Resistance Curves" event_update={updateResistanceChart}/>
   </div>
 </Layout>
 
@@ -81,19 +84,20 @@ const updateData2 = "data2"
   });
 </script>
 
-<script is:inline type="module" define:vars={{updateData1, updateData2}}>
+<script>
 
-import { getFormDataAsObject } from "./src/utils/form.ts";
-import { getPowerSpeedCurve } from "./src/utils/train_model.ts";
-import { getTorqueSpeedCurve } from "./src/utils/train_model.ts";
-import { getResistance } from "./src/utils/train_model.ts";
-import { getVmax } from "./src/utils/train_model.ts";
-import { renameKeys } from "./src/utils/utils.ts";
+import { getFormDataAsObject } from "@utils/form";
+import { getPowerSpeedCurve } from "@utils/train_model.ts";
+import { getTorqueSpeedCurve } from "@utils/train_model.ts";
+import { getResistance } from "@utils/train_model.ts";
+import { getVmax } from "@utils/train_model.ts";
+import { renameKeys } from "@utils/utils.ts";
+import { update_chart } from "@utils/charts.ts";
 
-const form = document.getElementById("trainData");
-if (!form instanceof HTMLFormElement){
-  throw new Error ("Form element with id 'trainData' not found.")
-}
+const form = document.getElementById("trainData") as HTMLFormElement | null;
+// if (!form instanceof HTMLFormElement){
+//   throw new Error ("Form element with id 'trainData' not found.")
+// }
 form.addEventListener("submit", function(event) {
   event.preventDefault();
 
@@ -116,26 +120,17 @@ form.addEventListener("submit", function(event) {
   const resis = renameKeys(r_total, "vel", "resis")
   const resis_5 = renameKeys(r_5, "vel", "resis")
 
-  const event2 = new CustomEvent(updateData1, {
-    detail: {
-      datasets: [
-        {label: "Power", data: chart_pow},
-        {label: "Torque", data: chart_torq}
-      ]
-    }
-  });
-  document.dispatchEvent(event2);
-
-  const event3 = new CustomEvent(updateData2, {
-    detail: {
-      datasets: [
-        {label: "V max", data: point_arr},
-        {label: "Torque", data: chart_torq},
-        {label: "Resistance", data: resis},
-        {label: "Resistance 5%", data: resis_5},
-      ]
-    }
-  });
-  document.dispatchEvent(event3);
+  update_chart(
+    document,
+    this.dataset.update_power_chart,
+    [{label: "Power", data: chart_pow},
+    {label: "Torque", data: chart_torq}])
+  update_chart(
+    document,
+    this.dataset.update_resistance_chart,
+    [{label: "V max", data: point_arr},
+    {label: "Torque", data: chart_torq},
+    {label: "Resistance", data: resis},
+    {label: "Resistance 5%", data: resis_5}])
 });
 </script>
