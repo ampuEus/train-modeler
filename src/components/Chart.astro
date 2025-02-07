@@ -1,0 +1,112 @@
+---
+type Props = {
+  title: string
+  event_update: string
+};
+
+const { title, event_update } = Astro.props;
+
+const id_chart = Math.random().toString(36).substring(2, 9);
+const id_btn_reset = Math.random().toString(36).substring(2, 9);
+---
+
+<div>
+  <canvas id={ id_chart }></canvas>
+  <button id={ id_btn_reset }>Reset zoom</button>
+</div>
+
+<script type="module" define:vars={{id_chart, id_btn_reset, title, event_update}}>
+import { Chart } from '../../node_modules/chart.js/auto';
+import zoomPlugin from '../../node_modules/chartjs-plugin-zoom';
+
+const ctx = document.getElementById(id_chart).getContext('2d');
+
+Chart.register(zoomPlugin);
+var myChart1 = new Chart(ctx, {
+  type: 'line',
+  data: {
+    datasets: []
+  },
+  options: {
+    plugins: {
+      title: {
+        display: true,
+        text: title,
+      },
+      zoom: {
+        limits: {
+          y: {}
+        },
+        zoom: {
+          mode: 'xy',
+          drag: {
+            enabled: true,
+          },
+          wheel: {
+            enabled: true,
+          }
+        },
+        pan: {
+          enabled: true,
+          mode: 'xy',
+          modifierKey: 'shift',
+        }
+      }
+    },
+    scales: {
+      x: {
+        type: "linear",
+        title: {
+          display: true,
+          text: ""
+        }
+      },
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: ""
+        }
+      }
+    },
+    interaction: {
+      intersect: false,
+      axis: 'x',
+      mode: 'nearest',
+    },
+  }
+});
+
+
+const handleCustomEvent = (event) => {
+  // Event handler for external updates
+  const datasets = event.detail.datasets;
+  if (myChart1) {
+    // myChart1.data.labels = axe_x;
+    myChart1.data.datasets = [];  // Clear previous datasets
+    // Add a dataset for each set of y values
+    datasets.forEach(dataset => {
+      myChart1.data.datasets.push({
+        label: dataset.label,
+        data: dataset.data,
+      });
+    });
+    // const allYValues = y_values.flat(); // Flatten the y values array in case of multiple arrays
+    // myChart1.options.plugins.zoom.limits.y.min = Math.min(...allYValues);
+    // myChart1.options.plugins.zoom.limits.y.max = Math.max(...allYValues);
+    myChart1.update();
+    myChart1.resetZoom();
+    myChart1.options.plugins.zoom.limits.y.max = myChart1.scales.y.max;
+    myChart1.options.plugins.zoom.limits.y.min = myChart1.scales.y.min;
+    // myChart1.options.plugins.zoom.limits.x.max = myChart1.scales.x.max;
+    // myChart1.options.plugins.zoom.limits.x.min = myChart1.scales.x.min;
+    myChart1.update();
+  }
+};
+
+document.addEventListener(event_update, handleCustomEvent);
+const by = document.getElementById(id_btn_reset);
+by.addEventListener('click', function() {
+    myChart1.resetZoom();
+  });
+</script>

@@ -1,7 +1,11 @@
 ---
-import Layout from "../layouts/Layout.astro";
-import DataInput from "../components/DataInput.astro";
-import CheckboxDataInput from "../components/CheckboxDataInput.astro";
+import Layout from "@/layouts/Layout.astro";
+import DataInput from "@/components/DataInput.astro";
+import CheckboxDataInput from "@/components/CheckboxDataInput.astro";
+import Chart from "@/components/Chart.astro";
+
+const updateData1 = "data1"
+const updateData2 = "data2"
 ---
 
 <Layout>
@@ -9,10 +13,10 @@ import CheckboxDataInput from "../components/CheckboxDataInput.astro";
     <DataInput name="gravity" label="Gravity [m/s^2]: " default_value={9.806}/>
     <DataInput name="rho" label="ρ [kg/m^3]: " default_value={1.225} tooltip="Air density under standard conditions"/>
 
-    <DataInput name="v_max" label="Train maximum velocity [km/h]: "/>
-    <DataInput name="v_base" label="Train 1/v motor point velocity [km/h]: " tooltip="speed on 1/v point"/>
-    <DataInput name="p_max" label="Train maximum power [kW]: "/>
-    <DataInput name="t_max" label="Train maximum torque [kN]: "/>
+    <DataInput name="vel_max" label="Train maximum velocity [km/h]: "/>
+    <DataInput name="vel_1v" label="Train 1/v motor point velocity [km/h]: " tooltip="speed on 1/v point"/>
+    <DataInput name="pow_max" label="Train maximum power [kW]: "/>
+    <DataInput name="torq_max" label="Train maximum torque [kN]: "/>
 
     <DataInput name="mass" label="Train weight [kg]: "/>
     <DataInput name="mass_rotating" label="Rotating mass constant [-]: " tooltip="Mass increasing for rotating masses"/>
@@ -21,12 +25,12 @@ import CheckboxDataInput from "../components/CheckboxDataInput.astro";
     <DataInput name="cr" label="Train weight [-]: "/>
     <DataInput name="cc" label="Train weight [-]: "/>
     <DataInput name="cx" label="Train weight [-]: "/>
-    <DataInput name="s" label="Train surface [m^2]: "/>
+    <DataInput name="surface" label="Train surface [m^2]: "/>
     <DataInput name="axles" label="Train motorized axles [-]: "/>
     <CheckboxDataInput name="slope" label_checkbox="Add slope to path"  label="[‰]: " tooltip="10 meter up on 100 meter line"/>
     <DataInput name="ar" label="Radial acceleration [-]: "/>
 
-    <button type="submit">Calculate</button>
+    <button type="submit" >Calculate</button>
     <button type="reset">Reset</button>
     <button type="button" id="exportDataBtn">Export data</button>
     <button type="button" id="importDataBtn">Import data</button>
@@ -34,180 +38,104 @@ import CheckboxDataInput from "../components/CheckboxDataInput.astro";
   </form>
   <pre id="output"></pre>
   <div>
-    <canvas id="powerCurveChart"></canvas>
-    <canvas id="resistanceChart"></canvas>
+    <Chart title="Power-Force Curves" event_update={updateData1}/>
+    <Chart title="Resistance Curves" event_update={updateData2}/>
   </div>
-
 </Layout>
 
 <script>
-  import { exportData } from "../form";
+  import { exportData } from "@/utils/form";
 
-  const exportBtn = document.getElementById('exportDataBtn');
-  exportBtn.addEventListener('click', function() {
-    exportData()
+  const exportBtn = document.getElementById('exportDataBtn') as HTMLButtonElement | null;
+  if (!exportBtn) throw new Error('Export button not found in the DOM.');
+
+  exportBtn.addEventListener('click', (event: MouseEvent) => {
+    try {
+      exportData();
+    } catch (error) {
+      console.error('Error while exporting data:', error);
+      alert('Something went wrong while exporting data. Please try again.');
+    }
   });
 </script>
 
 <script>
-  import { importData } from "../form";
-  const inputBtn = document.getElementById('importDataBtn');
-  const inputFile = document.getElementById('importData');
+  import { importData } from "@/utils/form";
 
-  // Disparar el evento click del input oculto
-  inputBtn.addEventListener('click', function() {
+  const inputBtn = document.getElementById('importDataBtn') as HTMLButtonElement | null;
+  const inputFile = document.getElementById('importData') as HTMLInputElement | null;
+  if (!inputBtn || !inputFile) throw new Error('Required DOM elements not found.');
+
+  inputBtn.addEventListener('click', () => {
     inputFile.click();
   });
 
-  // Opcionalmente, manejar la selección de archivo
-  inputFile.addEventListener('change', function() {
-    const file = inputFile.files[0];
+  inputFile.addEventListener('change', () => {
+    const file = inputFile.files?.[0];
     if (!file){
       alert('No file selected');
       return false
     }
     importData(file)
+    return true
   });
 </script>
 
-<script>
-  var ctx1 = document.getElementById('powerCurveChart').getContext('2d');
-  var ctx2 = document.getElementById('resistanceChart').getContext('2d');
-  var myChart1 = new Chart(ctx1, {
-      type: 'line',
-      data: {
-          labels: [],
-          datasets: [{
-              label: 'Sales',
-              data: [],
-              backgroundColor: 'rgba(75, 192, 192, 0.2)',
-              borderColor: 'rgba(75, 192, 192, 1)',
-              borderWidth: 1
-          }]
-      },
-      options: {
-          scales: {
-              y: {
-                  beginAtZero: true
-              }
-          }
-      }
-  });
-  var myChart2 = new Chart(ctx2, {
-    type: 'line',
-    data: {
-        labels: [],
-        datasets: [{
-            label: 'Sales',
-            data: [],
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            borderColor: 'rgba(75, 192, 192, 1)',
-            borderWidth: 1
-        }]
-    },
-    options: {
-        plugins: {
-            title: {
-                display: true,
-                text: 'My Sales Data'
-            },
-            normalizer: { // Normalizer plugin configuration
-                enabled: true, type: 'linear',
-                range: [0, 1] // Range to normalize the data to
-            }
-        },
-        scales: { y: { beginAtZero: true } }
+<script type="module" define:vars={{updateData1, updateData2}}>
+
+import { getFormDataAsObject } from "/src/utils/form";
+import { getPowerSpeedCurve } from "/src/utils/train_model";
+import { getTorqueSpeedCurve } from "/src/utils/train_model";
+import { getResistance } from "/src/utils/train_model";
+import { getVmax } from "/src/utils/train_model";
+import { renameKeys } from "/src/utils/utils";
+
+const form = document.getElementById("trainData");
+if (!form instanceof HTMLFormElement){
+  throw new Error ("Form element with id 'trainData' not found.")
+}
+form.addEventListener("submit", function(event) {
+  event.preventDefault();
+
+  const data = getFormDataAsObject(this)
+
+  const vels = Array.from({ length: Math.ceil(data.vel_max + data.vel_max / 2) }, (_, i) => i);
+  const pow = getPowerSpeedCurve(data.pow_max, data.vel_1v, vels);
+  const torq = getTorqueSpeedCurve(data.torq_max, pow, data.vel_1v);
+
+  const {r_total, r_5} = getResistance(data, vels, false, false, false, false)
+  const point1 = getVmax(torq, r_total)
+  console.log("p1: " + point1)
+  const point2 = getVmax(torq, r_5)
+  console.log("p2: " + point1)
+  const null_point = {x: null, y: null}
+  const point_arr = [point1, null_point, point2]
+
+  const chart_pow = renameKeys(pow, "vel", "pow")
+  const chart_torq = renameKeys(torq, "vel", "torq")
+  const resis = renameKeys(r_total, "vel", "resis")
+  const resis_5 = renameKeys(r_5, "vel", "resis")
+
+  const event2 = new CustomEvent(updateData1, {
+    detail: {
+      datasets: [
+        {label: "Power", data: chart_pow},
+        {label: "Torque", data: chart_torq}
+      ]
     }
+  });
+  document.dispatchEvent(event2);
+
+  const event3 = new CustomEvent(updateData2, {
+    detail: {
+      datasets: [
+        {label: "V max", data: point_arr},
+        {label: "Torque", data: chart_torq},
+        {label: "Resistance", data: resis},
+        {label: "Resistance 5%", data: resis_5},
+      ]
+    }
+  });
+  document.dispatchEvent(event3);
 });
-
-  import { getFormDataAsObject } from "../form";
-  const form = document.getElementById("trainData") as HTMLFormElement;
-  form.addEventListener("submit", function(event) {
-    event.preventDefault();
-    const data = getFormDataAsObject(this)
-
-    console.log(data)
-
-    // TODO check input data
-
-    // Get motor characteristic torque-speed curve
-    const v_plot_x = Array.from({ length: Math.ceil(data.v_max + data.v_max / 2) }, (_, i) => i);
-
-    function getPowerCurve(p_max, v_base, v_arr) {
-        const slope_p_max = p_max / v_base; // [kW/km/h]
-        return v_arr.map(v => (v <= v_base ? v * slope_p_max : p_max));
-    }
-
-    function getForceCurve(t_max, p, v_base, v_arr) {
-        return v_arr.map(v => (v <= v_base ? t_max : (p[v] * 3.6 / v)));
-    }
-
-    const p_y = getPowerCurve(data.p_max, data.v_base, v_plot_x);
-    const t_y = getForceCurve(data.t_max, p_y, data.v_base, v_plot_x);
-
-    // Plot the power and force curves
-    myChart1.data.labels = v_plot_x;
-    myChart1.data.datasets = [
-        {
-            label: 'P_y',
-            data: p_y,
-            borderColor: 'rgba(75, 192, 192, 1)',
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            fill: false
-        },
-        {
-            label: 'T_y',
-            data: t_y,
-            borderColor: 'rgba(192, 75, 75, 1)',
-            backgroundColor: 'rgba(192, 75, 75, 0.2)',
-            fill: false
-        }
-    ];
-    myChart1.update();
-
-    // Calculate resistances
-    const rr = data.mass * data.gravity * data.cr; // Resistance due to running
-    const rc = 0.5 * data.v_max ** 2 * data.rho * data.cx * data.s; // Aerodynamic resistance
-    const ri = data.mass * data.gravity * (data.slope / 1000); // Resistance due to the slope
-    const rc_curve = data.mass * data.gravity * data.cc; // Resistance due to the curve
-    const rac = data.mass * data.ar; // Inertia
-
-    const r_tot = v_plot_x.map(v => {
-        const marrus = (0.2 * (8 + 0.1 * v) / (8 + 0.2 * v) * data.mass * data.gravity * 0.25);
-        const aero = 0.5 * (v / 3.6) ** 2 * data.rho * data.cx * data.s;
-        return (rr + aero) / 1000;
-    });
-    const r_tot2 = v_plot_x.map(v => {
-        const marrus = (0.2 * (8 + 0.1 * v) / (8 + 0.2 * v) * data.mass * data.gravity * 0.25);
-        const aero = 0.5 * (v / 3.6) ** 2 * data.rho * data.cx * data.s;
-        return (rr + aero + rc_curve) / 1000;
-    });
-
-    myChart2.data.labels = v_plot_x;
-    myChart2.data.datasets = [
-        {
-            label: 'Total Resistance',
-            data: r_tot,
-            borderColor: 'rgba(75, 75, 192, 1)',
-            backgroundColor: 'rgba(75, 75, 192, 0.2)',
-            fill: false
-        },
-        {
-            label: 'Total Resistance 2',
-            data: r_tot2,
-            borderColor: 'rgba(75, 75, 192, 1)',
-            backgroundColor: 'rgba(75, 75, 192, 0.2)',
-            fill: false
-        },
-        {
-            label: 'T_y',
-            data: t_y,
-            borderColor: 'rgba(192, 75, 75, 1)',
-            backgroundColor: 'rgba(192, 75, 75, 0.2)',
-            fill: false
-        }
-    ];
-    myChart2.update();
-  });
 </script>
-
