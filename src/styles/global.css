@@ -1,0 +1,29 @@
+:root {
+  color-scheme: light dark;
+  font-family: system-ui;
+}
+
+html,
+body {
+  margin: 5px;
+}
+
+#trainData {
+  padding: 2rem;
+  border-radius: 5px;
+  border: 1px solid #eee;
+}
+
+.form-inputs{
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.charts{
+  max-width: 100vh;
+  /* display: flex;
+  gap: 1rem; */
+}

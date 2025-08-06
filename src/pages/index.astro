@@ -13,34 +13,39 @@ const updateResistanceChart = "resistance"
   id="trainData"
   data-update_power_chart={updatePowerChart}
   data-update_resistance_chart={updateResistanceChart}>
-    <DataInput name="gravity" label="Gravity [m/s^2]: " default_value={9.806}/>
-    <DataInput name="rho" label="ρ [kg/m^3]: " default_value={1.225} tooltip="Air density under standard conditions"/>
+    <div class="form-inputs">
+      <DataInput name="gravity" label="Gravity <math style='white-space: nowrap;'><mo>[</mo><mfrac><mn>m</mn><mn>s<sup>2</sup></mn></mfrac><mo>]</mo></math> " default_value={9.806}/>
+      <DataInput name="rho" label="ρ [<math style='white-space: nowrap;'><mfrac><mn>kg</mn><mn>m<sup>3</sup></mn></mfrac></math>]: " default_value={1.225} tooltip="Air density under standard conditions"/>
 
-    <DataInput name="vel_max" label="Train maximum velocity [km/h]: "/>
-    <DataInput name="vel_1v" label="Train 1/v motor point velocity [km/h]: " tooltip="speed on 1/v point"/>
-    <DataInput name="pow_max" label="Train maximum power [kW]: "/>
-    <DataInput name="torq_max" label="Train maximum torque [kN]: "/>
+      <DataInput name="vel_max" label="Train maximum velocity [<math style='white-space: nowrap;'><mfrac><mn>km</mn><mn>h</mn></mfrac></math>]: "/>
+      <DataInput name="vel_1v" label="Train <math style='white-space: nowrap;'><mfrac><mn>1</mn><mn>v</mn></mfrac></math> motor point velocity [<math style='white-space: nowrap;'><mfrac><mn>km</mn><mn>h</mn></mfrac></math>]: " tooltip="speed on 1/v point"/>
+      <DataInput name="pow_max" label="Train maximum power <math style='white-space: nowrap;'><mo>[</mo>kW<mo>]</mo></math>: "/>
+      <DataInput name="torq_max" label="Train maximum torque <math style='white-space: nowrap;'><mo>[</mo>kN<mo>]</mo></math>: "/>
 
-    <DataInput name="mass" label="Train weight [kg]: "/>
-    <DataInput name="mass_rotating" label="Rotating mass constant [-]: " tooltip="Mass increasing for rotating masses"/>
-    <DataInput name="wheel_diam" label="Train wheel diameter new [mm]: " tooltip="Wheel diameter on new conditions"/>
-    <DataInput name="wheel_diam_old" label="Train wheel diameter old[mm]: " tooltip="Wheel diameter on used conditions"/>
-    <DataInput name="cr" label="Train weight [-]: "/>
-    <DataInput name="cc" label="Train weight [-]: "/>
-    <DataInput name="cx" label="Train weight [-]: "/>
-    <DataInput name="surface" label="Train surface [m^2]: "/>
-    <DataInput name="axles" label="Train motorized axles [-]: "/>
-    <CheckboxDataInput name="slope" label_checkbox="Add slope to path"  label="[‰]: " tooltip="10 meter up on 100 meter line"/>
-    <DataInput name="ar" label="Radial acceleration [-]: "/>
+      <DataInput name="mass" label="Train weight <math style='white-space: nowrap;'><mo>[</mo>kg<mo>]</mo></math>: "/>
+      <DataInput name="mass_rotating" label="Rotating mass constant <math style='white-space: nowrap;'><mo>[</mo>-<mo>]</mo></math>: " tooltip="Mass increasing for rotating masses"/>
+      <DataInput name="wheel_diam" label="Train wheel diameter new <math style='white-space: nowrap;'><mo>[</mo>mm<mo>]</mo></math>: " tooltip="Wheel diameter on new conditions"/>
+      <DataInput name="wheel_diam_old" label="Train wheel diameter old <math style='white-space: nowrap;'><mo>[</mo>mm<mo>]</mo></math>: " tooltip="Wheel diameter on used conditions"/>
+      <DataInput name="cr" label="Train weight <math style='white-space: nowrap;'><mo>[</mo>-<mo>]</mo></math>: "/>
+      <DataInput name="cc" label="Train weight <math style='white-space: nowrap;'><mo>[</mo>-<mo>]</mo></math>: "/>
+      <DataInput name="cx" label="Train weight <math style='white-space: nowrap;'><mo>[</mo>-<mo>]</mo></math>: "/>
+      <DataInput name="surface" label="Train surface <math style='white-space: nowrap;'><mo>[</mo>m<sup>2</sup><mo>]</mo></math>: "/>
+      <DataInput name="axles" label="Train motorized axles <math style='white-space: nowrap;'><mo>[</mo>-<mo>]</mo></math>: "/>
+      <DataInput name="ar" label="Radial acceleration <math style='white-space: nowrap;'><mo>[</mo>-<mo>]</mo></math>: "/>
+      <CheckboxDataInput name="slope" label_checkbox="Add slope to path"  label="[‰]: " tooltip="10 meter up on 100 meter line"/>
+      <CheckboxDataInput name="slope2" label_checkbox="2Add slope to path"  label="2[‰]: " tooltip="210 meter up on 100 meter line"/>
+    </div>
 
-    <button type="submit" >Calculate</button>
-    <button type="reset">Reset</button>
-    <button type="button" id="exportDataBtn">Export data</button>
-    <button type="button" id="importDataBtn">Import data</button>
-    <input type="file" accept=".csv" id="importData" style="display: none;">
+    <div class="form-btns">
+      <button type="submit" >Calculate</button>
+      <button type="reset">Reset</button>
+      <button type="button" id="exportDataBtn">Export data</button>
+      <button type="button" id="importDataBtn">Import data</button>
+      <input type="file" accept=".csv" id="importData" style="display: none;">
+    </div>
   </form>
   <pre id="output"></pre>
-  <div>
+  <div class="charts">
     <Chart title="Power-Force Curves" event_update={updatePowerChart}/>
     <Chart title="Resistance Curves" event_update={updateResistanceChart}/>
   </div>
@@ -95,9 +100,6 @@ import { renameKeys } from "@utils/utils.ts";
 import { update_chart } from "@utils/charts.ts";
 
 const form = document.getElementById("trainData") as HTMLFormElement | null;
-// if (!form instanceof HTMLFormElement){
-//   throw new Error ("Form element with id 'trainData' not found.")
-// }
 form.addEventListener("submit", function(event) {
   event.preventDefault();
 
@@ -107,11 +109,9 @@ form.addEventListener("submit", function(event) {
   const pow = getPowerSpeedCurve(data.pow_max, data.vel_1v, vels);
   const torq = getTorqueSpeedCurve(data.torq_max, pow, data.vel_1v);
 
-  const {r_total, r_5} = getResistance(data, vels, false, false, false, false)
+  const {r_total, r_5} = getResistance(data, vels, false, true, false, true)
   const point1 = getVmax(torq, r_total)
-  console.log("p1: " + point1)
   const point2 = getVmax(torq, r_5)
-  console.log("p2: " + point1)
   const null_point = {x: null, y: null}
   const point_arr = [point1, null_point, point2]
 

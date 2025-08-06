@@ -1,25 +1,39 @@
 ---
 type Props = {
-  name: string,
-  label: string,
-  placeholder?: string,
-  default_value?: number,
-  tooltip?: string
+  name: string;
+  label: string;
+  placeholder?: string;
+  default_value?: number;
+  tooltip?: string;
 };
 
-const { name, label, placeholder=null, default_value="", tooltip="" } = Astro.props;
-
+const {
+  name,
+  label,
+  placeholder = null,
+  default_value = "",
+  tooltip = "",
+} = Astro.props;
 ---
-<label title={tooltip}>
-  {label}
+
+<div class="form-item">
+  <label title={tooltip} set:html={label} />
   <input
-  type="number"
-  step="0.0001"
-  min="0"
-  value={default_value}
-  name={name}
-  placeholder={placeholder}
-  title={tooltip}
-  required />
-</label>
-<br>
+    type="number"
+    step="0.0001"
+    min="0"
+    value={default_value}
+    name={name}
+    placeholder={placeholder}
+    title={tooltip}
+    required
+  />
+</div>
+
+<style>
+  .form-item {
+    display: grid;
+    align-items: end;
+    max-height: 4rem;
+  }
+</style>

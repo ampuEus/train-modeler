@@ -1,46 +1,169 @@
 ---
 type Props = {
-  name: string,
-  label_checkbox: string,
-  label: string,
-  placeholder?: string,
-  default_value?: number,
-  tooltip?: string
+  name: string;
+  label_checkbox: string;
+  label: string;
+  placeholder?: string;
+  default_value?: number;
+  tooltip?: string;
 };
 
-const { name, label_checkbox, label, placeholder=null, default_value="", tooltip="" } = Astro.props;
-const id_checkbox = Math.random().toString(36).substring(2, 9);
-const id_data = Math.random().toString(36).substring(2, 9);
+const {
+  name,
+  label_checkbox,
+  label = "Enable",
+  placeholder = "Enter a value",
+  default_value = "",
+  tooltip = "",
+} = Astro.props;
+
+const containerId = `container-${Math.random().toString(36).slice(2, 10)}`;
 ---
-<label title={tooltip}> {label_checkbox} </label>
-<input type="checkbox" id={id_checkbox} />
-<div>
-  <label >{label}</label>
-  <input
-  id={id_data}
-  name={name}
-  type="number"
-  step="0.0001"
-  min="0"
-  value={default_value}
-  placeholder={placeholder}
-  title={tooltip}
-  disabled
-  />
+
+<div id={containerId} class="container">
+  <div>
+    <label title={tooltip}>{label_checkbox}</label>
+    <input type="checkbox" />
+  </div>
+
+  <div class="input-list">
+    <div class="input-row">
+      <label title={tooltip}>{label}</label>
+      <input
+        name={name}
+        type="number"
+        step="0.0001"
+        min="0"
+        value={default_value}
+        placeholder={placeholder}
+        title={tooltip}
+        disabled
+      />
+      <button type="button" class="delete-btn">
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M10 11V17"></path>
+          <path d="M14 11V17"></path>
+          <path d="M4 7H20"></path>
+          <path
+            d="M6 7H12H18V18C18 19.6569 16.6569 21 15 21H9C7.34315 21 6 19.6569 6 18V7Z"
+          ></path>
+          <path
+            d="M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5V7H9V5Z"
+          ></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <button id="add-btn" type="button" class="add-circle-btn">
+    <svg
+      width="25"
+      height="25"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path
+        d="M12 22C17.5 22 22 17.5 22 12C22 6.5 17.5 2 12 2C6.5 2 2 6.5 2 12C2 17.5 6.5 22 12 22Z"
+      ></path>
+      <path d="M8 12H16"></path>
+      <path d="M12 16V8"></path>
+    </svg>
+  </button>
 </div>
-<br>
 
-<script type="module" define:vars={{id_data, id_checkbox}}>
-  var checkbox = document.getElementById(id_checkbox);
+<script type="module" define:vars={{ containerId }}>
+  document.addEventListener("DOMContentLoaded", function () {
+    const container = document.getElementById(containerId);
+    if (!container) return;
 
-  checkbox.addEventListener('click', function () {
-      var data = document.getElementById(id_data);
-      if (this.checked) {
-        data.disabled = false;
-        data.required = true;
-      } else {
-        data.disabled = true;
-        data.required = false;
-      }
-  })
+    const enableCheckbox = container.querySelector('input[type="checkbox"]');
+    const inputList = container.querySelector(".input-list");
+    const addBtn = container.querySelector(".add-circle-btn");
+    const originalElement = container.querySelector(".input-row");
+
+    function updateEnabledState() {
+      inputList.querySelectorAll("input").forEach((input) => {
+        input.disabled = !enableCheckbox.checked;
+        input.required = enableCheckbox.checked;
+      });
+    }
+
+    // Listen to the enable checkbox
+    enableCheckbox.addEventListener("change", updateEnabledState);
+
+    // Setup initial delete handler and sync enabled state
+    inputList.querySelectorAll(".input-row").forEach((group) => {
+      group.querySelector(".delete-btn").addEventListener("click", function () {
+        group.remove();
+      });
+    });
+
+    function cloneGroup(originalElement) {
+      const clonedElement = originalElement.cloneNode(true);
+      const deleteBtn = clonedElement.querySelector(".delete-btn");
+      deleteBtn.addEventListener("click", function () {
+        clonedElement.remove();
+      });
+      return clonedElement;
+    }
+
+    // Add button handler
+    addBtn.addEventListener("click", function () {
+      inputList.appendChild(cloneGroup(originalElement));
+      updateEnabledState();
+    });
+  });
 </script>
+
+<style>
+  .container {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .input-row {
+    display: grid;
+    grid-auto-flow: column;
+    margin-bottom: 0.5em;
+  }
+
+  .delete-btn {
+    padding: 0px;
+    vertical-align: middle;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #888;
+    transition: color 0.2s;
+  }
+
+  .delete-btn:hover {
+    color: #c00;
+  }
+
+  .add-circle-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: #888;
+    transition: color 0.2s;
+  }
+
+  .add-circle-btn:hover {
+    color: rgb(0, 138, 0);
+  }
+</style>
